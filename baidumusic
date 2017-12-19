@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# @Time    : 2017/12/19 8:44
+# @Author  : Xinru
+
+import requests
+import re
+import json
+# # 下载一个数据看下
+# url = 'http://zhangmenshiting.baidu.com/data2/music/62cf8e4129d6fb866ed7b8e31167ac21/559184467/559184467.mp3?xcode=3892a5c8fea6fffaaca186416cbdae39'
+# response = requests.get(url)
+# # print(response.content) # 二进制的数据
+# filename ='1.mp3'
+# with open(filename,'wb')as f:
+#     f.write(response.content)
+def get_mp3_by_sid(sid):
+# 根据sid下载歌曲
+#     sid = '100575177'
+    api = 'http://tingapi.ting.baidu.com/v1/restserver/ting?method=baidu.ting.song.play&format=jsonp&callback=jQuery17201570946375089306_1513644195707&songid=%s&_=1513644196595'% sid
+    response = requests.get(api)
+    data = response.text
+    data = re.findall(r'\((.*)\)',data)[0]
+    data = json.loads(data)
+    # print(data)
+    mp3_name = data['songinfo']['title']
+    mp3_url = data['bitrate']['show_link']
+    print(mp3_name,mp3_url)
+    response = requests.get(mp3_url)
+    filename = '%s.mp3'% mp3_name
+    with open(filename,'wb')as f:
+        f.write(response.content)
+def get_sids_by_name(query):
+# 根据查询的内容获取sid
+# http://music.baidu.com/search?key=%E9%B9%BF%E6%99%97
+#     query = '刘德华'
+    api = 'http://music.baidu.com/search'
+    data = {
+        'key':query
+    }
+    response = requests.get(api,params=data)
+    html = response.text
+    sids = re.findall(r'sid&quot;:(\d+)',html)
+    return sids
+    # print(sids)
+sids = get_sids_by_name('鹿晗')
+# print(sids)
+for sid in sids:
+    get_mp3_by_sid(sid)
